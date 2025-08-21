@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>尿不湿比价器（手动输入版）</title>
+<style>
+:root {
+--bg:#f7f7fb; --card:#fff; --text:#222; --muted:#666; --pri:#4b7bf5; --ok:#16a34a; --warn:#d97706; --err:#dc2626; --bd:#e5e7eb;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,Segoe UI Emoji;color:var(--text);background:var(--bg)}
+header{padding:16px 16px 8px}
+h1{font-size:20px;margin:0 0 6px}
+.sub{color:var(--muted);font-size:13px}
+main{padding:8px 16px 24px;max-width:1100px;margin:0 auto}
+.grid{display:grid;gap:12px}
+@media(min-width:880px){.grid{grid-template-columns: 1.15fr 1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.card h2{font-size:16px;margin:0 0 8px}
+.row{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin-bottom:8px}
+.row .col-3{grid-column:span 3}
+.row .col-4{grid-column:span 4}
+.row .col-6{grid-column:span 6}
+.row .col-12{grid-column:span 12}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input,button,select,textarea{
+width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:#fff;font-size:14px;color:var(--text);
+}
+input[type=number]{text-align:right}
+button{cursor:pointer;background:var(--pri);color:#fff;border:none}
+button.ghost{background:#fff;color:var(--text);border:1px solid var(--bd)}
+button.warn{background:var(--warn)}
+button.err{background:var(--err)}
+button.ok{background:var(--ok)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.table-wrap{overflow:auto;border-radius:10px;border:1px solid var(--bd)}
+table{border-collapse:collapse;width:100%;min-width:780px;background:#fff}
+th,td{padding:10px;border-bottom:1px solid var(--bd);font-size:14px;text-align:left;vertical-align:top}
+th{background:#fafafa;color:#333;position:sticky;top:0}
+.mono{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.chip{display:inline-block;padding:2px 6px;border-radius:6px;background:#eef2ff;color:#3743a5;font-size:12px}
+.right{text-align:right}
+.nowrap{white-space:nowrap}
+.small{font-size:12px}
+.link{color:var(--pri);text-decoration:underline;cursor:pointer}
+.hidden{display:none}
+.footer{color:var(--muted);font-size:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+<h1>尿不湿比价器</h1>
+<div class="sub">手动输入，自动算每片单价；支持优惠/满减/税运/赠送；自动保存本地，可导入导出与分享链接</div>
+</header>
+
+<main class="grid">
+<section class="card">
+<h2>添加/编辑商品</h2>
+<form id="itemForm" autocomplete="off">
+<div class="row">
+<div class="col-6">
+<label>品牌</label>
+<input type="text" name="brand" placeholder="如：帮宝适" required>
+</div>
+<div class="col-6">
+<label>系列/尺码</label>
+<input type="text" name="variant" placeholder="如：一级拉拉裤 L">
+</div>
+</div>
+
+<div class="row">
+<div class="col-4">
+<label>片/包</label>
+<input type="number" name="piecesPerPack" min="0" step="1" value="0">
+</div>
+<div class="col-4">
+<label>包数</label>
+<input type="number" name="packs" min="0" step="1" value="0">
+</div>
+<div class="col-4">
+<label>赠送片数</label>
+<input type="number" name="bonusPieces" min="0" step="1" value="0">
+</div>
+</div>
+
+<div class="row">
+<div class="col-6">
+<label>商品总价（未折前）</label>
+<input type="number" name="basePrice" min="0" step="0.01" value="0">
+</div>
+<div class="col-6">
+<label>打折系数（不打折填 1，9折填 0.9）</label>
+<input type="number" name="discountRate" min="0" step="0.01" value="1">
+</div>
+</div>
+
+<div class="row">
+<div class="col-4">
+<label>直减金额</label>
+<input type="number" name="directCut" min="0" step="0.01" value="0">
+</div>
+<div class="col-4">
+<label>优惠券金额</label>
+<input type="number" name="coupon" min="0" step="0.01" value="0">
+</div>
+<div class="col-4">
+<label>积分/红包抵扣</label>
+<input type="number" name="points" min="0" step="0.01" value="0">
+</div>
+</div>
+
+<div class="row">
+<div class="col-6">
+<label>满减门槛（可多档，按整倍数抵扣）</label>
+<input type="number" name="fullThreshold" min="0" step="0.01" value="0">
+</div>
+<div class="col-6">
+<label>每档满减金额</label>
+<input type="number" name="fullReduce" min="0" step="0.01" value="0">
+</div>
+</div>
+
+<div class="row">
+<div class="col-6">
+<label>税费</label>
+<input type="number" name="tax" min="0" step="0.01" value="0">
+</div>
+<div class="col-6">
+<label>运费</label>
+<input type="number" name="shipping" min="0" step="0.01" value="0">
+</div>
+</div>
+
+<div class="row">
+<div class="col-12">
+<label>备注（可选）</label>
+<input type="text" name="note" placeholder="如：限时券、平台活动名称等">
+</div>
+</div>
+
+<div class="actions">
+<button type="submit" id="submitBtn" class="ok">添加</button>
+<button type="button" id="resetBtn" class="ghost">清空表单</button>
+<button type="button" id="cancelEditBtn" class="ghost hidden">取消编辑</button>
+</div>
+<div class="footer">计算顺序：先打折，再直减/券/积分，再满减（可多档），最后加税和运费。</div>
+</form> </section>
+
+<section class="card">
+<h2>列表与操作</h2>
+<div class="actions">
+<button id="exportBtn" class="ghost">导出JSON</button>
+<input type="file" id="importFile" accept=".json" class="hidden">
+<button id="importBtn" class="ghost">导入JSON</button>
+<button id="shareBtn" class="ghost">生成分享链接</button>
+<button id="clearAllBtn" class="warn">清空全部</button>
+<span class="small muted">已自动本地保存</span>
+</div>
+
+<div class="table-wrap" style="margin-top:10px">
+<table id="itemsTable">
+<thead>
+<tr>
+<th>品牌/系列</th>
+<th class="right nowrap link" data-sort="totalPieces">总片数 ▾</th>
+<th class="right nowrap link" data-sort="payable">实付 ▾</th>
+<th class="right nowrap link" data-sort="unitPrice">单价（每片） ▾</th>
+<th>备注</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="itemsBody"></tbody>
+</table>
+</div>
+<div class="footer">点击表头可切换排序。最低单价会排在前面。</div> </section>
+
+<section class="card" style="grid-column:1 / -1">
+<h2>说明与建议</h2>
+<ul class="small">
+<li>“总片数 = 片/包 × 包数 + 赠送片数”。“实付”会考虑打折系数、直减、优惠券、积分/红包、满减（多档）、税费与运费。</li>
+<li>若一次下单含多商品共享优惠，建议按各商品“打折后小计”比例分摊再录入，以更公平。</li>
+<li>导出JSON可备份或跨设备导入；“分享链接”会把当前列表编码进网址（存放在#后，不经过服务器）。</li>
+<li>你也可以把本页部署到 GitHub Pages/Netlify/Vercel，任何人都能访问并使用自己的本地存储。</li>
+</ul>
+</section>
+</main>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+const LS_KEY = 'diaperPriceDataV1';
+let items = [];
+let editingId = null;
+let sortKey = 'unitPrice';
+let sortDir = 'asc'; // or 'desc'
+
+function uuid(){ return 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+function parseNum(v, def=0){
+const n = parseFloat(v);
+return Number.isFinite(n) ? n : def;
+}
+
+function sanitizeItem(raw){
+const item = {
+id: raw.id || uuid(),
+brand: (raw.brand||'').trim(),
+variant: (raw.variant||'').trim(),
+piecesPerPack: Math.max(0, Math.floor(parseNum(raw.piecesPerPack))),
+packs: Math.max(0, Math.floor(parseNum(raw.packs))),
+bonusPieces: Math.max(0, Math.floor(parseNum(raw.bonusPieces))),
+basePrice: Math.max(0, parseNum(raw.basePrice)),
+discountRate: Math.max(0, parseNum(raw.discountRate, 1)),
+directCut: Math.max(0, parseNum(raw.directCut)),
+coupon: Math.max(0, parseNum(raw.coupon)),
+points: Math.max(0, parseNum(raw.points)),
+fullThreshold: Math.max(0, parseNum(raw.fullThreshold)),
+fullReduce: Math.max(0, parseNum(raw.fullReduce)),
+tax: Math.max(0, parseNum(raw.tax)),
+shipping: Math.max(0, parseNum(raw.shipping)),
+note: (raw.note||'').trim(),
+};
+return item;
+}
+
+function compute(item){
+const totalPieces = item.piecesPerPack * item.packs + item.bonusPieces;
+const discounted = item.basePrice * item.discountRate;
+let fullReduction = 0;
+if (item.fullThreshold > 0 && item.fullReduce > 0){
+fullReduction = Math.floor(discounted / item.fullThreshold) * item.fullReduce;
+}
+const subtotal = Math.max(0, discounted - item.directCut - item.coupon - item.points - fullReduction);
+const payable = subtotal + item.tax + item.shipping;
+const unitPrice = totalPieces > 0 ? payable / totalPieces : null;
+return { totalPieces, discounted, fullReduction, payable, unitPrice };
+}
+
+function money(n){ return n == null || !Number.isFinite(n) ? '—' : n.toFixed(2); }
+function unit(n){ return n == null || !Number.isFinite(n) ? '—' : n.toFixed(4).replace(/0+$/,'').replace(/\.$/,''); }
+function text(s){ return (s||'').replace(/[<>&]/g, c=>({ '<':'&lt;','>':'&gt;','&':'&amp;' }[c])); }
+
+function save(){
+localStorage.setItem(LS_KEY, JSON.stringify(items));
+}
+function load(){
+try{
+const raw = localStorage.getItem(LS_KEY);
+if(raw){
+const arr = JSON.parse(raw);
+if(Array.isArray(arr)){
+items = arr.map(sanitizeItem);
+}
+}
+}catch(e){ console.warn('load error', e); }
+}
+
+function render(){
+// sort
+const sorted = [...items].sort((a,b)=>{
+const ca = compute(a), cb = compute(b);
+const va = sortKey==='unitPrice' ? ca.unitPrice
+: sortKey==='payable' ? ca.payable
+: sortKey==='totalPieces' ? ca.totalPieces : 0;
+const vb = sortKey==='unitPrice' ? cb.unitPrice
+: sortKey==='payable' ? cb.payable
+: sortKey==='totalPieces' ? cb.totalPieces : 0;
+const na = (va==null? Number.POSITIVE_INFINITY : va);
+const nb = (vb==null? Number.POSITIVE_INFINITY : vb);
+return (sortDir==='asc' ? (na-nb) : (nb-na));
+});
+
+const tbody = $('#itemsBody');
+tbody.innerHTML = '';
+
+sorted.forEach(item=>{
+const c = compute(item);
+const tr = document.createElement('tr');
+tr.innerHTML = `
+<td>
+<div><strong>${text(item.brand||'未命名')}</strong></div>
+<div class="muted small">${text(item.variant||'')}</div>
+</td>
+<td class="right mono">
+<div>${c.totalPieces || 0}</div>
+<div class="muted small">${item.packs||0}包 × ${item.piecesPerPack||0}片 + 送${item.bonusPieces||0}</div>
+</td>
+<td class="right mono">
+<div>¥${money(c.payable)}</div>
+<div class="muted small">折后¥${money(item.basePrice*item.discountRate)} − 直减¥${money(item.directCut)} − 券¥${money(item.coupon)} − 积分¥${money(item.points)} − 满减¥${money(c.fullReduction)} + 税¥${money(item.tax)} + 运¥${money(item.shipping)}</div>
+</td>
+<td class="right mono">
+<div><span class="chip">¥${unit(c.unitPrice)}/片</span></div>
+<div class="muted small">¥${money((c.unitPrice||0)*100)}/100片</div>
+</td>
+<td class="small">
+${text(item.note||'')}
+</td>
+<td class="small">
+<button data-act="edit" data-id="${item.id}" class="ghost" style="margin-bottom:6px;width:72px">编辑</button>
+<button data-act="del" data-id="${item.id}" class="err" style="width:72px">删除</button>
+</td>
+`;
+tbody.appendChild(tr);
+});
+
+// bind row actions
+$('#itemsBody').onclick = (e)=>{
+const btn = e.target.closest('button');
+if(!btn) return;
+const id = btn.getAttribute('data-id');
+const act = btn.getAttribute('data-act');
+const idx = items.findIndex(x=>x.id===id);
+if(idx<0) return;
+if(act==='edit'){
+startEdit(items[idx]);
+}else if(act==='del'){
+if(confirm('确定删除该条目吗？')){
+items.splice(idx,1);
+save(); render();
+}
+}
+};
+}
+
+function startEdit(item){
+editingId = item.id;
+const f = $('#itemForm');
+f.brand.value = item.brand||'';
+f.variant.value = item.variant||'';
+f.piecesPerPack.value = item.piecesPerPack||0;
+f.packs.value = item.packs||0;
+f.bonusPieces.value = item.bonusPieces||0;
+f.basePrice.value = item.basePrice||0;
+f.discountRate.value = item.discountRate||1;
+f.directCut.value = item.directCut||0;
+f.coupon.value = item.coupon||0;
+f.points.value = item.points||0;
+f.fullThreshold.value = item.fullThreshold||0;
+f.fullReduce.value = item.fullReduce||0;
+f.tax.value = item.tax||0;
+f.shipping.value = item.shipping||0;
+f.note.value = item.note||'';
+$('#submitBtn').textContent = '更新';
+$('#cancelEditBtn').classList.remove('hidden');
+window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function resetForm(){
+editingId = null;
+$('#itemForm').reset();
+$('#itemForm').discountRate.value = 1;
+$('#itemForm').piecesPerPack.value = 0;
+$('#itemForm').packs.value = 0;
+$('#itemForm').bonusPieces.value = 0;
+$('#itemForm').basePrice.value = 0;
+$('#itemForm').directCut.value = 0;
+$('#itemForm').coupon.value = 0;
+$('#itemForm').points.value = 0;
+$('#itemForm').fullThreshold.value = 0;
+$('#itemForm').fullReduce.value = 0;
+$('#itemForm').tax.value = 0;
+$('#itemForm').shipping.value = 0;
+$('#submitBtn').textContent = '添加';
+$('#cancelEditBtn').classList.add('hidden');
+}
+
+// form submit
+$('#itemForm').addEventListener('submit', (e)=>{
+e.preventDefault();
+const data = Object.fromEntries(new FormData(e.target).entries());
+const item = sanitizeItem({...data, id: editingId||undefined});
+if(item.piecesPerPack*item.packs + item.bonusPieces <= 0){
+alert('总片数为 0，请检查片/包、包数与赠送片数。');
+return;
+}
+if(editingId){
+const idx = items.findIndex(x=>x.id===editingId);
+if(idx>=0) items[idx] = item;
+}else{
+items.push(item);
+}
+save(); render(); resetForm();
+});
+
+$('#resetBtn').onclick = resetForm;
+$('#cancelEditBtn').onclick = resetForm;
+
+// sorting
+$$('th.link').forEach(th=>{
+th.addEventListener('click', ()=>{
+const key = th.getAttribute('data-sort');
+if(sortKey===key){
+sortDir = (sortDir==='asc'?'desc':'asc');
+}else{
+sortKey = key;
+sortDir = key==='unitPrice' ? 'asc' : 'desc';
+}
+render();
+});
+});
+
+// export
+$('#exportBtn').onclick = ()=>{
+const blob = new Blob([JSON.stringify(items, null, 2)], {type:'application/json'});
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url; a.download = 'diaper-price-data.json'; a.click();
+URL.revokeObjectURL(url);
+};
+
+// import
+$('#importBtn').onclick = ()=>$('#importFile').click();
+$('#importFile').addEventListener('change', async (e)=>{
+const f = e.target.files[0];
+if(!f) return;
+try{
+const txt = await f.text();
+const arr = JSON.parse(txt);
+if(!Array.isArray(arr)) throw new Error('JSON 不是数组');
+if(!confirm('导入将覆盖当前列表，确定继续吗？')) return;
+items = arr.map(sanitizeItem);
+save(); render();
+}catch(err){
+alert('导入失败：' + err.message);
+}finally{
+e.target.value = '';
+}
+});
+
+// share link (encode data in URL hash, no server)
+function encodeBase64(str){
+return btoa(unescape(encodeURIComponent(str)));
+}
+function decodeBase64(b64){
+return decodeURIComponent(escape(atob(b64)));
+}
+$('#shareBtn').onclick = ()=>{
+try{
+const payload = { v:1, items };
+const b64 = encodeBase64(JSON.stringify(payload));
+const link = location.origin + location.pathname + '#data=' + b64;
+navigator.clipboard?.writeText(link);
+alert('分享链接已生成并复制到剪贴板：\n' + link);
+}catch(e){
+alert('生成分享链接失败：' + e.message);
+}
+};
+
+// clear
+$('#clearAllBtn').onclick = ()=>{
+if(confirm('确定清空所有条目吗？此操作不可恢复。')){
+items = [];
+save(); render(); resetForm();
+}
+};
+
+// load from localStorage
+load();
+
+// load from #data=... if present
+(function tryLoadFromHash(){
+const m = location.hash.match(/^#data=([\s\S]+)$/);
+if(!m) return;
+try{
+const json = decodeBase64(m[1]);
+const payload = JSON.parse(json);
+if(payload && Array.isArray(payload.items)){
+if(confirm('检测到分享数据，是否导入并覆盖当前列表？')){
+items = payload.items.map(sanitizeItem);
+save(); render();
+alert('已导入分享数据。');
+}
+}
+}catch(e){
+console.warn('解析分享数据失败', e);
+}
+})();
+
+// initial render
+render();
+})();
+</script>
+</body>
+</html>
