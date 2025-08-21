@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>尿不湿比价器 · 简洁版</title>
+<style>
+:root{--bg:#f7f7fb;--card:#fff;--text:#222;--muted:#666;--bd:#e5e7eb;--pri:#4b7bf5;--ok:#16a34a;--err:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:var(--bg)}
+header{padding:16px}
+h1{margin:0 0 6px;font-size:20px}
+.sub{color:var(--muted);font-size:13px}
+main{max-width:1000px;margin:0 auto;padding:12px 16px 24px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input,button{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:#fff;font-size:14px;color:var(--text)}
+input[type=number]{text-align:right}
+button{cursor:pointer;background:var(--pri);color:#fff;border:none}
+button.ghost{background:#fff;color:var(--text)}
+button.err{background:var(--err)}
+.row{display:grid;grid-template-columns: 1fr 1fr 0.6fr 0.6fr 0.6fr 1fr;gap:8px}
+.row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.muted{color:var(--muted)} .small{font-size:12px} .right{text-align:right}
+.table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:880px;background:#fff}
+th,td{padding:10px;border-bottom:1px solid var(--bd);font-size:14px;text-align:left;vertical-align:top}
+th{background:#fafafa;position:sticky;top:0}
+.mono{font-variant-numeric:tabular-nums}
+.chip{display:inline-block;padding:2px 6px;border-radius:6px;background:#eef2ff;color:#3743a5;font-size:12px}
+.link{cursor:pointer;text-decoration:underline}
+.nowrap{white-space:nowrap}
+.hl{background:#ecfeff}
+</style>
+</head>
+<body>
+<header>
+<h1>尿不湿比价器 · 简洁版</h1>
+<div class="sub">按“品牌/型号/片/包/包数/单价/总价/单片价格/备注”记录；自动保存，支持日期筛选历史</div>
+</header>
+
+<main>
+<section class="card">
+<form id="f" autocomplete="off">
+<div class="row">
+<div>
+<label>品牌</label>
+<input name="brand" type="text" placeholder="如：帮宝适" required>
+</div>
+<div>
+<label>型号</label>
+<input name="model" type="text" placeholder="如：一级 拉拉裤 L">
+</div>
+<div>
+<label>片/包</label>
+<input name="ppp" type="number" min="1" step="1" placeholder="如：48" required>
+</div>
+<div>
+<label>包数</label>
+<input name="packs" type="number" min="1" step="1" placeholder="如：3" required>
+</div>
+<div>
+<label>单价（元/包）</label>
+<input name="unit" type="number" min="0" step="0.01" placeholder="如：56.00" required>
+</div>
+<div>
+<label>备注（可选）</label>
+<input name="note" type="text" placeholder="如：店铺券-20，包邮">
+</div>
+</div>
+<div class="row2">
+<button type="submit" id="btnOk">添加</button>
+<button type="button" id="btnReset" class="ghost">清空表单</button>
+<button type="button" id="btnCancel" class="ghost" style="display:none">取消编辑</button>
+<button type="button" id="btnClearAll" class="err" style="margin-left:auto">清空全部</button>
+</div>
+<div class="small muted" style="margin-top:6px">提示：单价按“每包价格”填写；总价与单片价格会自动计算（单片价格 = 单价 ÷ 片/包）。</div>
+</form>
+</section>
+
+<section class="card">
+<div class="row2" style="align-items:flex-end">
+<div>
+<label>历史筛选（起始日期）</label>
+<input type="date" id="dateFrom">
+</div>
+<div>
+<label>历史筛选（结束日期）</label>
+<input type="date" id="dateTo">
+</div>
+<button type="button" id="btnClearFilter" class="ghost">清除筛选</button>
+<span class="small muted" id="stat" style="margin-left:auto"></span>
+</div>
+
+<div class="table-wrap" style="margin-top:10px">
+<table>
+<thead>
+<tr>
+<th class="link" data-sort="brand">品牌 ▾</th>
+<th class="link" data-sort="model">型号 ▾</th>
+<th class="right link nowrap" data-sort="ppp">片/包 ▾</th>
+<th class="right link nowrap" data-sort="packs">包数 ▾</th>
+<th class="right link nowrap" data-sort="unit">单价（¥/包） ▾</th>
+<th class="right link nowrap" data-sort="total">总价（¥） ▾</th>
+<th class="right link nowrap" data-sort="ppu">单片价格（¥） ▾</th>
+<th>备注</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+<div class="small muted" style="margin-top:6px">默认按“单片价格”升序；可点击表头切换排序。</div> </section>
+</main>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const LS = 'diaper_simple_history_v1';
+
+let items = [];
+let editingId = null;
+let sortKey = 'ppu'; // ppu=price per unit (per piece)
+let sortDir = 'asc'; // 'asc' or 'desc'
+let dateFrom = null, dateTo = null;
+
+function uid(){ return 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function toNum(v, d=0){ const n = parseFloat(v); return Number.isFinite(n)? n : d; }
+function toInt(v, d=0){ const n = Math.floor(parseFloat(v)); return Number.isFinite(n)? n : d; }
+function fmtMoney(n){ return Number.isFinite(n) ? n.toFixed(2) : '—'; }
+function fmtUnit(n){
+if(!Number.isFinite(n)) return '—';
+const s = n.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');
+return s;
+}
+function esc(s){ return (s||'').replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+
+function save(){ localStorage.setItem(LS, JSON.stringify(items)); }
+function load(){
+try{
+const raw = localStorage.getItem(LS);
+if(raw){ items = JSON.parse(raw) || []; }
+}catch(e){ items = []; }
+}
+
+function compute(it){
+const total = it.unit * it.packs;
+const ppu = it.ppp > 0 ? (it.unit / it.ppp) : null; // 单片价格 = 每包价 / 片/包
+return { total, ppu };
+}
+
+function inDateRange(ts){
+if(dateFrom && ts < dateFrom) return false;
+if(dateTo && ts > dateTo) return false;
+return true;
+}
+
+function render(){
+const data = items.filter(x=>inDateRange(x.createdAt));
+// sort
+const sorted = [...data].sort((a,b)=>{
+const ca = compute(a), cb = compute(b);
+const va =
+sortKey==='brand' ? (a.brand||'') :
+sortKey==='model' ? (a.model||'') :
+sortKey==='ppp' ? a.ppp :
+sortKey==='packs' ? a.packs :
+sortKey==='unit' ? a.unit :
+sortKey==='total' ? ca.total :
+sortKey==='ppu' ? ca.ppu : '';
+const vb =
+sortKey==='brand' ? (b.brand||'') :
+sortKey==='model' ? (b.model||'') :
+sortKey==='ppp' ? b.ppp :
+sortKey==='packs' ? b.packs :
+sortKey==='unit' ? b.unit :
+sortKey==='total' ? cb.total :
+sortKey==='ppu' ? cb.ppu : '';
+if(typeof va === 'string' || typeof vb === 'string'){
+return sortDir==='asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+}else{
+const A = (va==null? Number.POSITIVE_INFINITY : va);
+const B = (vb==null? Number.POSITIVE_INFINITY : vb);
+return sortDir==='asc' ? (A-B) : (B-A);
+}
+});
+
+const tbody = $('#tbody');
+tbody.innerHTML = '';
+sorted.forEach(it=>{
+const c = compute(it);
+const tr = document.createElement('tr');
+tr.innerHTML = `
+<td>${esc(it.brand)}</td>
+<td>${esc(it.model||'')}</td>
+<td class="right mono">${it.ppp}</td>
+<td class="right mono">${it.packs}</td>
+<td class="right mono">¥${fmtMoney(it.unit)}</td>
+<td class="right mono ${sortKey==='total'?'hl':''}">¥${fmtMoney(c.total)}</td>
+<td class="right mono ${sortKey==='ppu'?'hl':''}"><span class="chip">¥${fmtUnit(c.ppu)}</span></td>
+<td>${esc(it.note||'')}</td>
+<td>
+<button class="ghost" data-act="edit" data-id="${it.id}" style="margin-right:6px">编辑</button>
+<button class="err" data-act="del" data-id="${it.id}">删除</button>
+</td>
+`;
+tbody.appendChild(tr);
+});
+
+// stats
+$('#stat').textContent = `共 ${sorted.length} 条（已保存于本地历史）`;
+
+// row actions
+tbody.onclick = (e)=>{
+const btn = e.target.closest('button');
+if(!btn) return;
+const id = btn.getAttribute('data-id');
+const idx = items.findIndex(x=>x.id===id);
+if(idx<0) return;
+const act = btn.getAttribute('data-act');
+if(act==='edit'){
+startEdit(items[idx]);
+}else if(act==='del'){
+if(confirm('确定删除该条目吗？')){
+items.splice(idx,1);
+save(); render();
+}
+}
+};
+}
+
+function startEdit(it){
+editingId = it.id;
+const f = $('#f');
+f.brand.value = it.brand||'';
+f.model.value = it.model||'';
+f.ppp.value = it.ppp||'';
+f.packs.value = it.packs||'';
+f.unit.value = it.unit||'';
+f.note.value = it.note||'';
+$('#btnOk').textContent = '更新';
+$('#btnCancel').style.display = '';
+window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function resetForm(){
+editingId = null;
+$('#f').reset();
+$('#btnOk').textContent = '添加';
+$('#btnCancel').style.display = 'none';
+}
+
+// submit
+$('#f').addEventListener('submit', (e)=>{
+e.preventDefault();
+const f = e.target;
+const brand = (f.brand.value||'').trim();
+const model = (f.model.value||'').trim();
+const ppp = Math.max(1, toInt(f.ppp.value));
+const packs = Math.max(1, toInt(f.packs.value));
+const unit = Math.max(0, toNum(f.unit.value));
+const note = (f.note.value||'').trim();
+
+if(!brand){ alert('请填写品牌'); return; }
+if(!(ppp>0)){ alert('片/包需 > 0'); return; }
+if(!(packs>0)){ alert('包数需 > 0'); return; }
+
+const now = Date.now();
+const obj = {
+id: editingId || uid(),
+brand, model, ppp, packs, unit, note,
+createdAt: editingId ? (items.find(x=>x.id===editingId)?.createdAt || now) : now,
+updatedAt: now
+};
+
+if(editingId){
+const idx = items.findIndex(x=>x.id===editingId);
+if(idx>=0) items[idx] = obj;
+}else{
+items.push(obj);
+}
+save(); render(); resetForm();
+});
+
+$('#btnReset').onclick = resetForm;
+$('#btnCancel').onclick = resetForm;
+
+$('#btnClearAll').onclick = ()=>{
+if(confirm('确定清空全部条目吗？此操作不可恢复。')){
+items = []; save(); render(); resetForm();
+}
+};
+
+// sorting
+$$('th.link').forEach(th=>{
+th.addEventListener('click', ()=>{
+const key = th.getAttribute('data-sort');
+if(sortKey===key){
+sortDir = (sortDir==='asc'?'desc':'asc');
+}else{
+sortKey = key;
+sortDir = key==='ppu' ? 'asc' : 'desc'; // 单片价格默认升序
+}
+// 更新表头箭头显示
+$$('th.link').forEach(x=>{
+const k = x.getAttribute('data-sort');
+const arrow = (k===sortKey) ? (sortDir==='asc'?' ▾':' ▴') : ' ▾';
+x.textContent = x.textContent.replace(/( ▾| ▴)?$/,'') + arrow;
+});
+render();
+});
+});
+
+// date filter
+function applyDateFilter(){
+const f = $('#dateFrom').value;
+const t = $('#dateTo').value;
+dateFrom = f ? new Date(f + 'T00:00:00').getTime() : null;
+dateTo = t ? new Date(t + 'T23:59:59.999').getTime() : null;
+render();
+}
+$('#dateFrom').addEventListener('change', applyDateFilter);
+$('#dateTo').addEventListener('change', applyDateFilter);
+$('#btnClearFilter').onclick = ()=>{
+$('#dateFrom')..value = '';
+$('#dateTo').value = '';
+dateFrom = dateTo = null;
+render();
+};
+
+// init
+load();
+// 默认按单片价格升序
+sortKey = 'ppu'; sortDir = 'asc';
+render();
+})();
+</script>
+</body>
+</html>
