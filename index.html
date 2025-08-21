@@ -3,60 +3,73 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>尿不湿比价器</title>
+<title>屁粮比价器</title>
 <style>
-:root{--bd:#e5e7eb;--text:#222;--muted:#666;--pri:#2563eb;--err:#dc2626}
+:root{
+--font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+--text:#222;
+--muted:#666;
+--bd:#e6e6e6;
+--hd:#f7f7f7;
+--accent:#2563eb;
+--danger:#b91c1c;
+--fs:13px;
+--lh:1.45;
+--cell-vpad:6px;
+--cell-hpad:8px;
+--input-pad:6px;
+--radius:6px;
+}
 *{box-sizing:border-box}
-body{margin:0;background:#fff;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;font-size:14px}
-header{max-width:1100px;margin:0 auto;padding:14px 16px 8px}
-h1{margin:0;font-size:18px;font-weight:600}
-.sub{color:var(--muted);font-size:12px;margin-top:4px}
-main{max-width:1100px;margin:0 auto;padding:0 16px 24px}
-.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
-button{cursor:pointer;border:1px solid var(--bd);background:#fff;color:#111;border-radius:6px;padding:7px 10px;font-size:14px}
-button.primary{background:var(--pri);border-color:var(--pri);color:#fff}
-button.danger{border-color:#f3d2d2;color:#fff;background:var(--err)}
+body{margin:0;color:var(--text);font-family:var(--font);font-size:var(--fs);line-height:var(--lh);background:#fff}
+header{max-width:1100px;margin:0 auto;padding:12px 16px 6px}
+h1{margin:0 0 2px;font-size:15px;font-weight:600}
+.sub{color:var(--muted);font-size:12px}
+main{max-width:1100px;margin:0 auto;padding:0 16px 20px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+button{cursor:pointer;border:1px solid var(--bd);background:#fff;color:#111;border-radius:4px;padding:6px 10px;font-size:var(--fs)}
+.btn-primary{border-color:#cfe0ff;color:#fff;background:#2b6de8}
+.btn-danger{border-color:#f3d2d2;color:#fff;background:#dc2626}
 .hint{color:var(--muted);font-size:12px;margin-left:auto}
-.table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:8px}
-table{border-collapse:collapse;width:100%;min-width:900px}
-th,td{border-bottom:1px solid var(--bd);padding:8px 10px;vertical-align:middle}
-th{position:sticky;top:0;background:#fafafa;font-weight:600}
+.table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:var(--radius)}
+table{border-collapse:collapse;width:100%;min-width:900px;background:#fff}
+th,td{border-bottom:1px solid var(--bd);padding:var(--cell-vpad) var(--cell-hpad);vertical-align:middle}
+th{background:var(--hd);font-weight:600;color:#333;user-select:none}
+th.sortable{cursor:pointer}
 th.right, td.right{text-align:right}
-input[type=text],input[type=number]{width:100%;padding:6px 8px;border:1px solid var(--bd);border-radius:4px;font-size:14px;background:#fff;color:#111}
+.mono{font-variant-numeric: tabular-nums}
+.chip{display:inline-block;padding:1px 6px;border-radius:5px;background:#eef2ff;color:#3730a3;font-size:12px}
+input[type=text], input[type=number]{width:100%;padding:var(--input-pad) calc(var(--input-pad) + 2px);border:1px solid var(--bd);border-radius:4px;background:#fff;color:#111;font-size:var(--fs)}
 input[type=number]{text-align:right}
-.mono{font-variant-numeric:tabular-nums}
-.del{background:#fff;border-color:#f3d2d2;color:#b91c1c}
-.chip{display:inline-block;padding:2px 6px;border-radius:5px;background:#eef2ff;color:#3730a3;font-size:12px}
-.link{cursor:pointer;text-decoration:underline}
+.btn-del{border:1px solid #f3d2d2;color:var(--danger);background:#fff;padding:4px 8px;border-radius:4px}
 </style>
 </head>
 <body>
 <header>
-<h1>尿不湿比价器</h1>
-<div class="sub">列：品牌，型号，片/包，包数，单价（¥/包），总价（¥），单片价格（¥/片），备注。输入即计算；可排序。</div>
+<h1>屁粮比价器</h1>
+<div class="sub">品牌、型号、片/包、包数、单价（¥/包）、总价（¥）、单片价格（¥/片）、备注。输入即计算；点击表头排序。</div>
 </header>
 
 <main>
 <div class="toolbar">
-<button class="primary" id="addRowBtn">新增一行</button>
-<button id="sortBtn" data-dir="asc">按“单片价格”排序 ▾</button>
-<button class="danger" id="clearBtn">清空列表</button>
-<span class="hint">提示：总价 = 单价 × 包数；单片价格 = 单价 ÷ 片/包</span>
+<button class="btn-primary" id="addRowBtn">新增一行</button>
+<button class="btn-danger" id="clearBtn">清空列表</button>
+<span class="hint">总价 = 单价 × 包数；单片价格 = 单价 ÷ 片/包</span>
 </div>
 
 <div class="table-wrap">
 <table id="tbl">
 <thead>
 <tr>
-<th style="width:140px">品牌</th>
-<th style="width:220px">型号</th>
-<th class="right" style="width:90px">片/包</th>
-<th class="right" style="width:90px">包数</th>
-<th class="right" style="width:120px">单价（¥/包）</th>
-<th class="right" style="width:120px">总价（¥）</th>
-<th class="right" style="width:140px" id="thPPU" data-dir="asc">单片价格（¥/片） ▾</th>
+<th class="sortable" data-key="brand">品牌</th>
+<th class="sortable" data-key="model">型号</th>
+<th class="right sortable" data-key="ppp" style="width:90px">片/包</th>
+<th class="right sortable" data-key="packs" style="width:90px">包数</th>
+<th class="right sortable" data-key="unit" style="width:120px">单价（¥/包）</th>
+<th class="right sortable" data-key="total" style="width:120px">总价（¥）</th>
+<th class="right sortable" data-key="ppu" style="width:140px">单片价格（¥/片）</th>
 <th>备注</th>
-<th style="width:70px">操作</th>
+<th style="width:66px">操作</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -67,11 +80,15 @@ input[type=number]{text-align:right}
 <script>
 (function(){
 const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
 const tbody = $('#tbody');
 
+let sortKey = 'ppu';
+let sortDir = 'asc';
+
 function esc(s){ return (s||'').replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
-function toNum(v){ const n = parseFloat(v); return Number.isFinite(n) ? n : 0; }
-function toInt(v){ const n = Math.floor(parseFloat(v)); return Number.isFinite(n) ? n : 0; }
+function toNum(v){ const n = parseFloat(v); return Number.isFinite(n)? n : 0; }
+function toInt(v){ const n = Math.floor(parseFloat(v)); return Number.isFinite(n)? n : 0; }
 function fmtMoney(n){ return Number.isFinite(n) ? n.toFixed(2) : '—'; }
 function fmtUnit(n){ if(!Number.isFinite(n)) return '—'; return n.toFixed(4).replace(/0+$/,'').replace(/\.$/,''); }
 
@@ -81,17 +98,15 @@ const packs = Math.max(0, toInt(tr.querySelector('input[name=packs]').value));
 const unit = Math.max(0, toNum(tr.querySelector('input[name=unit]').value));
 const total = unit * packs;
 const ppu = ppp > 0 ? (unit / ppp) : NaN;
-
 tr.querySelector('.cell-total').textContent = '¥' + fmtMoney(total);
 tr.querySelector('.cell-ppu').innerHTML = `<span class="chip">¥${fmtUnit(ppu)}</span>`;
+tr.dataset.brand = (tr.querySelector('input[name=brand]').value || '').trim().toLowerCase();
+tr.dataset.model = (tr.querySelector('input[name=model]').value || '').trim().toLowerCase();
+tr.dataset.ppp = Number.isFinite(ppp) ? ppp : '';
+tr.dataset.packs = Number.isFinite(packs) ? packs : '';
+tr.dataset.unit = Number.isFinite(unit) ? unit : '';
 tr.dataset.total = Number.isFinite(total) ? total : '';
 tr.dataset.ppu = Number.isFinite(ppu) ? ppu : '';
-}
-
-function onInput(e){
-const tr = e.target.closest('tr');
-if(!tr) return;
-computeRow(tr);
 }
 
 function addRow(init={}){
@@ -105,16 +120,19 @@ tr.innerHTML = `
 <td class="right mono cell-total">—</td>
 <td class="right mono cell-ppu"><span class="chip">—</span></td>
 <td><input type="text" name="note" placeholder="备注" value="${esc(init.note||'')}"></td>
-<td><button type="button" class="del btn-del">删除</button></td>
+<td><button type="button" class="btn-del">删除</button></td>
 `;
-tr.addEventListener('input', onInput);
+tr.addEventListener('input', ()=> computeRow(tr));
 tr.querySelector('.btn-del').addEventListener('click', ()=> tr.remove());
-// Enter 在最后一列时新增行
 tr.addEventListener('keydown', (e)=>{
-if(e.key==='Enter'){
+if(e.key === 'Enter'){
 const inputs = Array.from(tr.querySelectorAll('input'));
 const idx = inputs.indexOf(document.activeElement);
-if(idx === inputs.length - 1){ e.preventDefault(); const r = addRow(); r.querySelector('input[name=brand]').focus(); }
+if(idx === inputs.length - 1){
+e.preventDefault();
+const r = addRow();
+r.querySelector('input[name=brand]').focus();
+}
 }
 });
 tbody.appendChild(tr);
@@ -122,51 +140,71 @@ computeRow(tr);
 return tr;
 }
 
-function sortByPPU(dir='asc'){
-const rows = Array.from(tbody.querySelectorAll('tr'));
-// 先确保数值最新
-rows.forEach(r=>computeRow(r));
-rows.sort((a,b)=>{
-const A = parseFloat(a.dataset.ppu);
-const B = parseFloat(b.dataset.ppu);
-const aVal = Number.isFinite(A) ? A : Number.POSITIVE_INFINITY;
-const bVal = Number.isFinite(B) ? B : Number.POSITIVE_INFINITY;
-return dir==='asc' ? (aVal - bVal) : (bVal - aVal);
-});
-rows.forEach(r=>tbody.appendChild(r));
+function compareRows(a, b, key){
+if(key==='brand' || key==='model'){
+const A = a.dataset[key] || '';
+const B = b.dataset[key] || '';
+return A.localeCompare(B, 'zh-Hans-CN');
+}
+const Araw = parseFloat(a.dataset[key]);
+const Braw = parseFloat(b.dataset[key]);
+const A = Number.isFinite(Araw) ? Araw : Number.POSITIVE_INFINITY;
+const B = Number.isFinite(Braw) ? Braw : Number.POSITIVE_INFINITY;
+return A - B;
 }
 
-// 控件
-$('#addRowBtn').addEventListener('click', ()=> {
+function sortBy(key){
+sortKey = key;
+Array.from(tbody.querySelectorAll('tr')).forEach(tr=>computeRow(tr));
+const rows = Array.from(tbody.querySelectorAll('tr'));
+rows.sort((a,b)=>{
+const r = compareRows(a,b,key);
+return sortDir==='asc' ? r : -r;
+});
+rows.forEach(r=>tbody.appendChild(r));
+updateHeaderIndicators();
+}
+
+function updateHeaderIndicators(){
+$$('#tbl thead th.sortable').forEach(th=>{
+const key = th.getAttribute('data-key');
+const base = th.getAttribute('data-label') || th.textContent.replace(/\s+[▾▴]$/,'');
+th.setAttribute('data-label', base);
+if(key === sortKey){
+th.textContent = base + ' ' + (sortDir==='asc' ? '▾' : '▴');
+}else{
+th.textContent = base;
+}
+});
+}
+
+$$('#tbl thead th.sortable').forEach(th=>{
+th.addEventListener('click', ()=>{
+const key = th.getAttribute('data-key');
+if(sortKey === key){
+sortDir = (sortDir==='asc' ? 'desc' : 'asc');
+}else{
+sortKey = key;
+sortDir = 'asc';
+}
+sortBy(sortKey);
+});
+});
+
+$('#addRowBtn').addEventListener('click', ()=>{
 const r = addRow();
 r.querySelector('input[name=brand]').focus();
 });
-
 $('#clearBtn').addEventListener('click', ()=>{
 if(confirm('确定清空列表吗？')){
 tbody.innerHTML = '';
 addRow().querySelector('input[name=brand]').focus();
+sortKey = 'ppu'; sortDir = 'asc'; updateHeaderIndicators();
 }
 });
 
-$('#sortBtn').addEventListener('click', (e)=>{
-const btn = e.currentTarget;
-const dir = btn.getAttribute('data-dir') === 'asc' ? 'desc' : 'asc';
-btn.setAttribute('data-dir', dir);
-btn.textContent = `按“单片价格”排序 ${dir==='asc'?'▾':'▴'}`;
-sortByPPU(dir);
-});
-
-$('#thPPU').addEventListener('click', (e)=>{
-const th = e.currentTarget;
-const dir = th.getAttribute('data-dir') === 'asc' ? 'desc' : 'asc';
-th.setAttribute('data-dir', dir);
-th.innerHTML = `单片价格（¥/片） ${dir==='asc'?'▾':'▴'}`;
-sortByPPU(dir);
-});
-
-// 初始三行，方便直接录入
 addRow(); addRow(); addRow();
+updateHeaderIndicators();
 })();
 </script>
 </body>
